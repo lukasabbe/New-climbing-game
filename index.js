@@ -23,7 +23,7 @@ client.on("guildCreate",guild=>{
 //console logs when the bot turns on
 client.on("ready",()=>console.log("The bot is on"));
 //Checks for messeages in all guilds. 
-client.on("message",msg=>{
+client.on("message", async msg=>{
     //returns all the bots messages.
     if(msg.author.bot|| msg.channel.type == "dm") return;
     var theI;
@@ -75,9 +75,11 @@ client.on("message",msg=>{
             })
         }
     }
+    //a comand that resets ur game
     if(args[0] == "reset"){
         for(var i = 0 ; i < userInfo.users.length; i++){
             if(userInfo.users[i].id == msg.author.id){
+                //rewrie and finde a way
                 msg.author.createDM().then(dm=>{
                     if(userInfo.users[i].reactMsgID != undefined){
                         dm.messages.cache.get(userInfo.users[i].reactMsgID).delete();
@@ -91,6 +93,64 @@ client.on("message",msg=>{
         }
         msg.channel.send("you don't have an active game")
         return;
+    }
+    //reload the game. You need to use this command to get the reactions work when u stop the bot
+    if(args[0] == "reload")
+    {
+       for(var i = 0 ; i < userInfo.users.length; i++){
+           console.log("yes 1")
+            if(userInfo.users[i].id == msg.author.id){
+                console.log("yes 2")
+                if(userInfo.users[i].reactMsgID != undefined){
+                    console.log("yes 3")
+                    await msg.author.createDM().then(async dm =>{
+                        var sendDm="";
+                        if(userInfo.users[i].roomNow.exits == 1){
+                            sendDm += `**You enter the next room**. You are in a open room with ${userInfo.users[i].roomNow.exits} exit.\n`
+                        }
+                        else{
+                            sendDm += `**You enter the next room.** You are in a open room with ${userInfo.users[i].roomNow.exits} exits.\nThe exits are\n`
+                        }
+                        for(var y = 0; y < userInfo.users[i].roomNow.exits; y++){
+                            sendDm +=`-${userInfo.users[i].roomNow.dirs[y]}\n`;
+                        }
+                        //Cheks if it did spawn in a chest in the randommizer. If did tell the player here
+                        if(userInfo.users[i].roomNow.chest.spawn == true){
+                            sendDm += `**There is a chest in the middle of the room. Do you want to open it** ?\n`
+                        }
+                        else{
+                            sendDm += `You don't see anything else special\n`
+                        }
+                        //sends reactios to the next rooms. They are goind to be cheked so the users can keep playing
+                        await dm.send( sendDm+"To leave the room react with were you want to go").then(react =>{ 
+                            userInfo.users[i].reactMsgID = react.id;
+                            for(var y = 0; y < userInfo.users[i].roomNow.exits; y++){
+                                if(userInfo.users[i].roomNow.dirs[y] == "Left"){
+                                    react.react("⬅️");
+                                }
+                                if(userInfo.users[i].roomNow.dirs[y] == "Right"){
+                                    react.react("➡️");
+                                }
+                                if(userInfo.users[i].roomNow.dirs[y] == "Forward"){
+                                    react.react("⬆️");
+                                }
+                                if(userInfo.users[i].roomNow.dirs[y] == "Down"){
+                                    userInfo.users[i].gameStats.level += 1;
+                                    userInfo.users[i].gameStats.xp += getRndInteger(1,10);
+                                    react.react("⬇️");
+
+                                }
+                                //The emoji for chest for now
+                                if(userInfo.users[i].roomNow.chest.spawn == true){
+                                    react.react("📫");
+                                }
+                            }
+                        })
+                    })
+                }
+                
+            }
+       }
     }
     
 })
@@ -177,7 +237,7 @@ client.on("messageReactionAdd", async (reaction, user) =>{
                     userInfo.users[i].roomNow = room;
                     uppdateUserJSONfile()
                     await user.createDM().then(async dm=>{
-                        reaction.message.delete();
+                        await reaction.message.delete();
                         var sendDm = "";
                         //if a mob attacks the player. This will stop them from continuing
                         if(room.mobs.length > 0){
@@ -207,27 +267,31 @@ client.on("messageReactionAdd", async (reaction, user) =>{
                                 sendDm += `You don't see anything else special\n`
                             }
                             //sends reactios to the next rooms. They are goind to be cheked so the users can keep playing
-                            await dm.send( sendDm+"To leave the room react with were you want to go").then(react =>{ 
+                            await dm.send( sendDm+"To leave the room react with were you want to go").then(async react =>{ 
                                 userInfo.users[i].reactMsgID = react.id;
                                 for(var y = 0; y < room.exits; y++){
                                     if(room.dirs[y] == "Left"){
-                                        react.react("⬅️");
+                                        removeMes(i)
+                                        await react.react("⬅️");
                                     }
                                     if(room.dirs[y] == "Right"){
-                                        react.react("➡️");
+                                        removeMes(i)
+                                        await react.react("➡️");
                                     }
                                     if(room.dirs[y] == "Forward"){
-                                        react.react("⬆️");
+                                        removeMes(i)
+                                        await react.react("⬆️");
                                     }
                                     if(room.dirs[y] == "Down"){
+                                        removeMes(i)
                                         userInfo.users[i].gameStats.level += 1;
                                         userInfo.users[i].gameStats.xp += getRndInteger(1,10);
-                                        react.react("⬇️");
-    
+                                        await react.react("⬇️");
+     
                                     }
                                     //The emoji for chest for now
                                     if(room.chest.spawn == true){
-                                        react.react("📫");
+                                        await react.react("📫");
                                     }
                                 }
                             })
@@ -244,9 +308,9 @@ client.on("messageReactionAdd", async (reaction, user) =>{
                 if(userInfo.users[i].reactMsgID == reaction.message.id && userInfo.users[i].id == user.id){
                     if(userInfo.users[i].roomNow.chest.spawn == true){
                         //give the money from the chest. Random the code for random down at the funcitons 
-                        await user.createDM().then(dm=>{
+                        await user.createDM().then(async dm=>{
                             userInfo.users[i].gameStats.gold += userInfo.users[i].roomNow.chest.gold;
-                            dm.send("You found " + userInfo.users[i].roomNow.chest.gold + " in the chest\n You now have " + userInfo.users[i].gameStats.gold +" gold");
+                            await dm.send("You found " + userInfo.users[i].roomNow.chest.gold + " in the chest\n You now have " + userInfo.users[i].gameStats.gold +" gold").then( mes => mes.delete({timeout:1000 * 15}) );
                             userInfo.users[i].roomNow.chest.spawn = false;
                         })
                     }
@@ -274,57 +338,71 @@ client.on("messageReactionAdd", async (reaction, user) =>{
                                 console.log(userInfo.users[i].roomNow.mobs[0]);
                             }
                             else{
+                                userInfo.users[i].gameStats.energie += 1;
                                 if(reaction.emoji.name == "⚔️"){
-                                    if(getRndInteger(0,userInfo.users[i].gameStats.crit) == 5){
-                                        sendMes +=`You attacked the monster, and you got a crit bonus`;
-                                        userInfo.users[i].roomNow.mobs[0].hp -= atcdmg(i) * 2; 
+                                    // energy system. Cheks if the user has engufe of it.
+                                    if(userInfo.users[i].gameStats.energie <= 0){
+                                        sendMes +=`You don't have enough energy to attack. \nTry protecting yourself to get more energy\n`;
                                     }
                                     else{
-                                        sendMes +=`You attacked the monster\n`;
-                                        userInfo.users[i].roomNow.mobs[0].hp -= atcdmg(i);
+                                        //chanse to crit
+                                        if(getRndInteger(0,userInfo.users[i].gameStats.critchans) == 5){
+                                            sendMes +=`You attacked the monster, and you got a crit bonus\n`;
+                                            userInfo.users[i].roomNow.mobs[0].hp -= atcdmg(i) * 2; 
+                                        }
+                                        else{
+                                            sendMes +=`You attacked the monster\n`;
+                                            userInfo.users[i].roomNow.mobs[0].hp -= atcdmg(i);
+                                        }
+                                        userInfo.users[i].gameStats.energie -= 2;
                                     }
-
                                     //if the players kills the mob
                                     if(userInfo.users[i].roomNow.mobs[0].hp <= 0 ){
-                                        sendMes +=`you killed the monster`;
+                                        sendMes +=`you killed the monster\n`;
                                         userInfo.users[i].gameStats.xp += genRndXP(i);
                                         sendMes += `The monster had \n`
                                         if(userInfo.users[i].roomNow.mobs[0].iv.length != undefined){
                                             for(var y = 0 ; y <userInfo.users[i].roomNow.mobs[0].iv.length;y++){
                                                 userInfo.users[i].inv.push(userInfo.users[i].roomNow.mobs[0].iv[y]);
-                                                sendMes += `-${userInfo.users[i].roomNow.mobs[0].iv[y].name}`
+                                                sendMes += `-${userInfo.users[i].roomNow.mobs[0].iv[y].name}\n`
                                             }
+                                            sendMes += `you picked up the items\n\n`;
                                         }
                                         if(userInfo.users[i].roomNow.exits == 1){
-                                            sendDm = `**You enter the next room**. You are in a open room with ${userInfo.users[i].roomNow.exits} exit.\n`
+                                            sendMes += `**You enter the next room**. You are in a open room with ${userInfo.users[i].roomNow.exits} exit.\n`
                                         }
                                         else{
-                                            sendDm = `**You enter the next room.** You are in a open room with ${userInfo.users[i].roomNow.exits} exits.\nThe exits are\n`
+                                            sendMes += `**You enter the next room.** You are in a open room with ${userInfo.users[i].roomNow.exits} exits.\nThe exits are\n`
                                         }
                                         for(var y = 0; y < userInfo.users[i].roomNow.exits; y++){
-                                            sendDm +=`-${userInfo.users[i].roomNow.dirs[y]}\n`;
+                                            sendMes +=`-${userInfo.users[i].roomNow.dirs[y]}\n`;
                                         }
                                         //Cheks if it did spawn in a chest in the randommizer. If did tell the player here
                                         if(userInfo.users[i].roomNow.chest.spawn == true){
-                                            sendDm += `**There is a chest in the middle of the room. Do you want to open it** ?\n`
+                                            sendMes += `**There is a chest in the middle of the room. Do you want to open it** ?\n`
                                         }
                                         else{
-                                            sendDm += `You don't see anything else special\n`
+                                            sendMes += `You don't see anything else special\n`
                                         }
                                         //sends reactios to the next rooms. They are goind to be cheked so the users can keep playing
-                                        await dm.send( sendDm+"To leave the room react with were you want to go").then(react =>{ 
+                                        await dm.send( sendMes+"To leave the room react with were you want to go").then(async react =>{ 
+                                            await reaction.message.delete();
                                             userInfo.users[i].reactMsgID = react.id;
                                             for(var y = 0; y < userInfo.users[i].roomNow.exits; y++){
                                                 if(userInfo.users[i].roomNow.dirs[y] == "Left"){
+                                                    removeMes(i)
                                                     react.react("⬅️");
                                                 }
                                                 if(userInfo.users[i].roomNow.dirs[y] == "Right"){
+                                                    removeMes(i)
                                                     react.react("➡️");
                                                 }
                                                 if(userInfo.users[i].roomNow.dirs[y] == "Forward"){
+                                                    removeMes(i)
                                                     react.react("⬆️");
                                                 }
                                                 if(userInfo.users[i].roomNow.dirs[y] == "Down"){
+                                                    removeMes(i)
                                                     userInfo.users[i].gameStats.level += 1;
                                                     userInfo.users[i].gameStats.xp += getRndInteger(1,10);
                                                     react.react("⬇️");
@@ -341,13 +419,14 @@ client.on("messageReactionAdd", async (reaction, user) =>{
                                     }
                                 }
                                 else if(reaction.emoji.name == "🛡️"){
-                                    sendMes +=`You protected your self agenst the monster `
+                                    userInfo.users[i].gameStats.energie += 1;
+                                    sendMes +=`You tryed protected your self agenst the monster\n`
                                 }
                             }
                             if(userInfo.users[i].roomNow.mobs[0].hp > 0){
                             //info about atack round
                             sendMes += "You can do one move each round\n";
-                            sendMes+=`__**Stats**__\n-HP:${userInfo.users[i].gameStats.hp}\n-equpied:${userInfo.users[i].gameStats.weapon.name}\n\n`;
+                            sendMes+=`__**Stats**__\n-HP:${userInfo.users[i].gameStats.hp}\n-equpied:${userInfo.users[i].gameStats.weapon.name}\n-energy:${userInfo.users[i].gameStats.energie}\n\n`;
                             sendMes+=`__**Monsters Stats**__\n-HP:${userInfo.users[i].roomNow.mobs[0].hp}\n`
                             sendMes+=`You can try to protect yourself with 🛡️\nOr you can attack with ⚔️`
                             await dm.send(sendMes).then(react=>{
@@ -365,10 +444,24 @@ client.on("messageReactionAdd", async (reaction, user) =>{
     }
 })
 
+//remove this function
+function removeMes(iuser)
+{
+    if(userInfo.users[iuser].ivMes != ""){
+        console.log(userInfo.users[iuser].ivMes +" " + userInfo.users[iuser].id)
+        console.log(client.users.cache.get(userInfo.users[iuser].id).dmChannel.messages)
+        client.users.cache.get(userInfo.users[iuser].id).dmChannel.messages.fetch(userInfo.users[iuser].ivMes).then(mes => mes.delete())
+        userInfo.users[iuser].ivMes = "";
+    }
+}   
+
+//generets rnd xp ?
 function genRndXP(iuser){
     return userInfo.users[iuser].roomNow.mobs[0].xp;
 }
 
+
+//attack dmg for the user
 function atcdmg(iuser){
     return getRndInteger(Math.round(userInfo.users[iuser].gameStats.weapon.dmg/2),userInfo.users[iuser].gameStats.weapon.dmg);
 }
@@ -380,10 +473,11 @@ function generateStatsMob(mobtype, iuser)
     if(mobtype == "zombie")
     {
         //xp generated and than multiplide for the player. So you can get harder and esayer mobs
-        var randomXpZombie =  getRndInteger(2,6) * (userInfo.users[iuser].gameStats.xp + getRndInteger(2,6)); 
+        //needs to be halfly fixed
+        var randomXpZombie =  Math.round((getRndInteger(2,4) * (userInfo.users[iuser].gameStats.xp + getRndInteger(2,6)))/getRndInteger(2,4)); 
         var zombie = {
             xp: randomXpZombie,
-            hp: randomXpZombie * getRndInteger(1 , 5) ,
+            hp: randomXpZombie * getRndInteger(1 , 4) ,
             damageOutPut: getRndInteger(1 , 5) * randomXpZombie,
             name:"zombie",
             //generets a random inv
@@ -393,7 +487,9 @@ function generateStatsMob(mobtype, iuser)
         return zombie;
     }
 }
-//function for gen items for a mob. it takes items from a drop list in user.json.
+//function for gen items for a mob. it takes items from a drop list in user.json. 
+
+//**THIS FUNCTION NEEDS TO BE REWRITEN, IT DOSEN'T WORK**
 function randomGeneratedInv(xp, iuser)
 {
     var betwenxp =  xp - userInfo.users[iuser].gameStats.xp;
@@ -405,6 +501,8 @@ function randomGeneratedInv(xp, iuser)
             return inv;
         }
     }
+    inv.push(" ");
+    return inv;
 }
 
 //function that uppdates the JSON user file
@@ -424,6 +522,8 @@ function startGame(id, guildid, reactid){
         reactMsgID:reactid,
         roomNow:{},
         inv:[],
+        ivMes:"",
+        chestMes:"",
         gameStats: baseStats()
     }
     //saves the user info in a json file 
@@ -451,6 +551,7 @@ function baseStats()
         hp:userInfo.basestats.hp,
         weapon:userInfo.basestats.weapon,
         critchans:userInfo.basestats.crit,
+        energie:10,
         level:1,
         xp:0,
         floor:1,

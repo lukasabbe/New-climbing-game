@@ -1,1 +1,103 @@
-{"users":[],"basestats":{"hp":100,"weapon":{"name":"hands","dmg":5},"crit":5},"drops":[{"id":0,"name":"stone_sword","dmg":35,"value":10,"type":"weapon","rareity":3},{"id":1,"name":"gold_bar","value":40,"type":"item","rareity":5},{"id":2,"name":"stone","value":1,"dmg":10,"type":"weapon","rareity":2},{"id":3,"name":"gold_sword","value":60,"dmg":40,"type":"weapon","rareity":6},{"id":4,"name":"iron_sword","dmg":30,"value":40,"type":"weapon","rareity":4}]}
+{
+    "users": [
+        {
+            "id": "249653220534779905",
+            "userGuild": "730484193938767882",
+            "gameOn": true,
+            "accepted": true,
+            "reactMsgID": "793507968481886238",
+            "roomNow": {
+                "dirs": [
+                    "Left",
+                    "Down",
+                    "Forward"
+                ],
+                "mobs": [
+                    {
+                        "name": "zombie",
+                        "isLodded": false
+                    }
+                ],
+                "chest": {
+                    "spawn": true,
+                    "gold": 25
+                },
+                "exits": 3
+            },
+            "inv": [
+                {
+                    "id": 0,
+                    "name": "stone_sword",
+                    "dmg": 35,
+                    "value": 10,
+                    "type": "weapon",
+                    "rareity": 3
+                }
+            ],
+            "ivMes": "",
+            "chestMes": "",
+            "gameStats": {
+                "hp": 100,
+                "weapon": {
+                    "name": "hands",
+                    "dmg": 5
+                },
+                "critchans": 5,
+                "energie": 2,
+                "level": 3,
+                "xp": 42,
+                "floor": 1,
+                "gold": 117
+            }
+        }
+    ],
+    "basestats": {
+        "hp": 100,
+        "weapon": {
+            "name": "hands",
+            "dmg": 5
+        },
+        "crit": 5
+    },
+    "drops": [
+        {
+            "id": 0,
+            "name": "stone_sword",
+            "dmg": 35,
+            "value": 10,
+            "type": "weapon",
+            "rareity": 3
+        },
+        {
+            "id": 1,
+            "name": "gold_bar",
+            "value": 40,
+            "type": "item",
+            "rareity": 5
+        },
+        {
+            "id": 2,
+            "name": "stone",
+            "value": 1,
+            "dmg": 10,
+            "type": "weapon",
+            "rareity": 2
+        },
+        {
+            "id": 3,
+            "name": "gold_sword",
+            "value": 60,
+            "dmg": 40,
+            "type": "weapon",
+            "rareity": 6
+        },
+        {
+            "id": 4,
+            "name": "iron_sword",
+            "dmg": 30,
+            "value": 40,
+            "type": "weapon",
+            "rareity": 4
+        }
+    ]
+}
